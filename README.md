@@ -32,9 +32,7 @@ pip install telepot requests openai
 ## Execução
 Execute o bot com o seguinte comando:
 ```bash
-python nome_do_script.py
-```
-Lembre-se de substituir `nome_do_script.py` pelo nome do seu arquivo de script.
+python BotTelegramGenerateImageDall3.py
 
 ## Uso
 1. Inicie uma conversa com o bot no Telegram.
