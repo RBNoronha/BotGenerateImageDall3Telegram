@@ -50,12 +50,14 @@ def on_chat_message(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     if content_type == "text":
         if msg["text"] == "/start":
-            bot.sendMessage(chat_id, "Por favor, envie o prompt para a imagem.")
+            bot.sendMessage(chat_id, "*Prezado usuário, por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.*",
+            parse_mode="markdown",)
         else:
             user_state[chat_id] = {"prompt": msg["text"]}
             bot.sendMessage(
                 chat_id, "Escolha o tamanho da imagem:", reply_markup=tamanho_keyboard()
             )
+
 
 
 def pos_geracao_keyboard():
