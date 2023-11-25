@@ -7,8 +7,12 @@ from openai import OpenAI
 from telepot.loop import MessageLoop
 from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
 
+# Substitua pelo seu token da API do OpenAI
+OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+
 # Inicialização do cliente OpenAI
-client = OpenAI()
+client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 # Substitua 'YOUR_TELEGRAM_TOKEN' pelo token do seu bot
 TOKEN = "YOUR_TELEGRAM_TOKEN"
@@ -96,7 +100,8 @@ def on_callback_query(msg):
 
         # Geração da imagem
         bot.sendMessage(
-            chat_id, "Sua solicitação está sendo processada. Aguarde um momento..."
+            chat_id, "*Sua solicitação está sendo processada. Aguarde um momento...*",
+            parse_mode="markdown",
         )
         generate_and_send_image(chat_id, user_state[chat_id])
 
@@ -110,7 +115,8 @@ def on_callback_query(msg):
     elif query_data == "regerar_mesmo":
         # Regenerar imagem com o mesmo prompt
         bot.sendMessage(
-            chat_id, "Gerando outra imagem com o mesmo prompt. Por favor, aguarde..."
+            chat_id, "*Gerando outra imagem com o mesmo prompt. Por favor, aguarde...*",
+            parse_mode="markdown",
         )
         generate_and_send_image(chat_id, user_state[chat_id])
         bot.sendMessage(
@@ -123,7 +129,8 @@ def on_callback_query(msg):
         # Solicitar um novo prompt
         bot.sendMessage(
             chat_id,
-            "Prezado usuário, por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.",
+            "*Prezado usuário, por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.*",
+            parse_mode="markdown",
         )
         user_state[chat_id] = {"prompt": None}  # Resetar para um novo prompt
 
@@ -151,7 +158,7 @@ MessageLoop(
     bot, {"chat": on_chat_message, "callback_query": on_callback_query}
 ).run_as_thread()
 
-print("Listening...")
+print("Executando...")
 
 # Mantenha o programa rodando
 while 1:
