@@ -50,8 +50,11 @@ def on_chat_message(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     if content_type == "text":
         if msg["text"] == "/start":
-            bot.sendMessage(chat_id, "*Prezado usuário, por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.*",
-            parse_mode="markdown",)
+            bot.sendMessage(
+                chat_id,
+                "*Prezado usuário, por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.*",
+                parse_mode="markdown",
+            )
         else:
             user_state[chat_id] = {"prompt": msg["text"]}
             bot.sendMessage(
@@ -59,19 +62,24 @@ def on_chat_message(msg):
             )
 
 
-
 def pos_geracao_keyboard():
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Gerar outra imagem com o mesmo prompt",
+                    text="Gerar outra imagem com o mesmo texto",
                     callback_data="regerar_mesmo",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Gerar imagem com novo prompt", callback_data="gerar_novo"
+                    text="Gerar imagem com novo texto", callback_data="gerar_novo"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Gerar com mesmo texto e novas opções",
+                    callback_data="regerar_opcoes",
                 )
             ],
         ]
@@ -96,7 +104,10 @@ def on_callback_query(msg):
         bot.sendMessage(
             chat_id, "Escolha a qualidade da imagem:", reply_markup=qualidade_keyboard()
         )
-    elif "quality" not in user_state[chat_id]:
+    elif (
+        "quality" not in user_state[chat_id]
+        and "awaiting_new_options" not in user_state[chat_id]
+    ):
         # Escolha de qualidade
         user_state[chat_id]["quality"] = query_data
 
@@ -115,9 +126,9 @@ def on_callback_query(msg):
         )
 
     elif query_data == "regerar_mesmo":
-        # Regenerar imagem com o mesmo prompt
+        # Regenerar imagem com o mesmo texto
         bot.sendMessage(
-            chat_id, "*Gerando outra imagem com o mesmo prompt. Por favor, aguarde...*",
+            chat_id, "*Gerando outra imagem com o mesmo texto. Por favor, aguarde...*",
             parse_mode="markdown",
         )
         generate_and_send_image(chat_id, user_state[chat_id])
@@ -130,14 +141,52 @@ def on_callback_query(msg):
     elif query_data == "gerar_novo":
         # Solicitar um novo prompt
         bot.sendMessage(
-            chat_id,
-            "*Prezado usuário, por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.*",
+            chat_id, "*Por favor, forneça a descrição para a imagem que deseja gerar. Inclua detalhes relevantes para obter o melhor resultado.*",
             parse_mode="markdown",
         )
         user_state[chat_id] = {"prompt": None}  # Resetar para um novo prompt
 
+    elif query_data == "regerar_opcoes":
+
+        # O usuário quer regerar a imagem com o mesmo texto, mas escolher novas opções
+        bot.sendMessage(
+            chat_id,
+            "Escolha o novo tamanho para a imagem:",
+            reply_markup=tamanho_keyboard(),
+        )
+        user_state[chat_id] = {
+            "prompt": user_state[chat_id]["prompt"],
+            "awaiting_new_options": True,
+        }
+
+    elif "awaiting_new_options" in user_state[chat_id]:
+        if "size" not in user_state[chat_id]:
+            # Nova escolha de tamanho
+            user_state[chat_id]["size"] = query_data
+            bot.sendMessage(
+                chat_id,
+                "Escolha a nova qualidade da imagem:",
+                reply_markup=qualidade_keyboard(),
+            )
+        else:
+            # Nova escolha de qualidade
+            user_state[chat_id]["quality"] = query_data
+            bot.sendMessage(
+                chat_id,
+                "Gerando imagem com o mesmo texto e novas opções. Por favor, aguarde...",
+                parse_mode="markdown",
+            )
+            generate_and_send_image(chat_id, user_state[chat_id])
+            bot.sendMessage(
+                chat_id,
+                "O que gostaria de fazer agora?",
+                reply_markup=pos_geracao_keyboard(),
+            )
+            del user_state[chat_id]["awaiting_new_options"]
+
 
 def generate_and_send_image(chat_id, user_data):
+    # Geração da imagem com a API DALL-E
     response = client.images.generate(
         model="dall-e-3",
         prompt=user_data["prompt"],
@@ -146,12 +195,18 @@ def generate_and_send_image(chat_id, user_data):
         quality=user_data["quality"],
     )
 
+    # Obter a URL da imagem gerada
     image_url = response.data[0].url
+
+    # Baixar o conteúdo da imagem
     image_content = requests.get(image_url).content
 
+    # Salvando o conteúdo da imagem em um arquivo temporário
     with tempfile.NamedTemporaryFile(delete=False) as temp_image:
         temp_image.write(image_content)
         temp_image.flush()
+
+        # Enviar a foto para o usuário usando o caminho do arquivo temporário
         bot.sendPhoto(chat_id, photo=open(temp_image.name, "rb"))
 
 
@@ -161,6 +216,11 @@ MessageLoop(
 ).run_as_thread()
 
 print("Executando...")
+
+# Mantenha o programa rodando
+while 1:
+    time.sleep(10)
+
 
 # Mantenha o programa rodando
 while 1:
