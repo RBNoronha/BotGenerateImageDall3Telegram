@@ -8,14 +8,14 @@ from telepot.loop import MessageLoop
 from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
 
 # Substitua pelo seu token da API do OpenAI
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
 
 # Inicialização do cliente OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 # Substitua 'YOUR_TELEGRAM_TOKEN' pelo token do seu bot
-TOKEN = "6774609946:AAGzjc24I9RgTpdo_cDCZ4AGAYNyhvKFXto"
+TOKEN = "YOUR_TELEGRAM_TOKEN"
 bot = telepot.Bot(TOKEN)
 
 # Dictionary to maintain user state
